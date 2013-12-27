@@ -1,13 +1,18 @@
 /*===================================================================================================
 	File Name: リサイズ.jsx
 	Title: リサイズ
-	Version: 1.0.0
+	Version: 1.0.1
 	Author: show555
 	Description: 選択したフォルダ内の画像を指定した長辺のサイズでリサイズする
 	Includes: Underscore.js
 ===================================================================================================*/
 
 #target photoshop
+
+// Photoshopの設定単位を保存
+var originalRulerUnits = app.preferences.rulerUnits;
+// Photoshopの設定単位をピクセルに変更
+app.preferences.rulerUnits = Units.PIXELS;
 
 // 初期設定
 var settings = {
@@ -241,7 +246,7 @@ uDlg.okBtn.onClick = function() {
 		}
 	}
 	// 不備がなかった場合処理続行
-	dispatchEvent();
+	uDlg.close();
 }
 
 // ダイアログ表示
@@ -292,6 +297,9 @@ if ( do_flag ) {
 		theDoc.close( SaveOptions.DONOTSAVECHANGES );
 	} );
 }
+
+// Photoshopの設定単位を復元
+app.preferences.rulerUnits = originalRulerUnits;
 
 // ------------------------------------------ 関数 -----------------------------------------
 function setSaveTypeQuality( saveType ) {
