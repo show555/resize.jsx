@@ -1,7 +1,7 @@
 /*===================================================================================================
 	File Name: リサイズ.jsx
 	Title: リサイズ
-	Version: 1.1.0
+	Version: 1.2.0
 	Author: show555
 	Description: 選択したフォルダ内の画像を指定した長辺のサイズでリサイズする
 	Includes: Underscore.js,
@@ -52,9 +52,10 @@ var settings = {
 			eps:    { label: 'EPS', extension: 'eps' },
 			png:    { label: 'PNG', extension: 'png' }
 		},
-		dir: 'resize'        // 保存先のディレクトリ名
+		dir: 'thumb'        // 保存先のディレクトリ名
 	},
 	fileTypes: [],
+	recursive: false,
 	saveType: '',
 	quality: '',
 	folderObj: {}
@@ -265,14 +266,7 @@ if ( do_flag ) {
 		extensions.push( settings._fileTypes.regex[fileType] );
 	} );
 	var fileReg = new RegExp( '(' + extensions.join( '|' ) + ')$', 'i' );
-	// 対象ファイルを取得
-	var files   = settings.folderObj.getFiles( function( thefile ) {
-		if ( fileReg.test( thefile.name ) ) {
-			return true;
-		} else {
-			return false;
-		}
-	} );
+	var files = _getFileList( settings.folderObj );
 
 	// 進捗バーを表示
 	var ProgressPanel = CreateProgressPanel( files.length, 500, '処理中…', true );
@@ -293,9 +287,9 @@ if ( do_flag ) {
 		var w = theDoc.width.value;
 		var h = theDoc.height.value;
 		if ( w > h && judgeResizeable( w, h ) ) {
-			theDoc.resizeImage( settings.maxpx, h * ( settings.maxpx/w ), 72, ResampleMethod.BICUBICSHARPER );
+			theDoc.resizeImage( settings.maxpx, h * ( settings.maxpx/w ), 72, ResampleMethod.BICUBICSMOOTHER );
 		} else if ( h >= w && judgeResizeable( w, h ) ) {
-			theDoc.resizeImage( w * ( settings.maxpx/h ), settings.maxpx, 72, ResampleMethod.BICUBICSHARPER );
+			theDoc.resizeImage( w * ( settings.maxpx/h ), settings.maxpx, 72, ResampleMethod.BICUBICSMOOTHER );
 		}
 		// 保存先フォルダを作成
 		var saveDir = new Folder( theDoc.path + '/' + settings.save.dir );
@@ -393,4 +387,25 @@ function CreateProgressPanel( myMaximumValue, myProgressBarWidth , progresTitle,
 		}
 	}
 	return PP;
+}
+
+function _getFileList( path ) {
+	var rv    = [],
+	    files = path.getFiles();
+
+	_.each( files, function( file ) {
+		if ( file.alias ) { // alias
+			return;
+		}
+		if ( file.constructor.name === 'File' ) { // file
+			if ( fileReg.test( file.name ) ) {
+				rv.push( file );
+			}
+		} else { // folder
+			if ( settings.recursive && (file.name !== settings.save.dir) ) {
+				rv.push.apply( rv, _getFileList( file ) );
+			}
+		}
+	} );
+	return rv;
 }
