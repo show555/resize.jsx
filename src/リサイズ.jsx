@@ -1,7 +1,7 @@
 /*===================================================================================================
 	File Name: リサイズ.jsx
 	Title: リサイズ
-	Version: 1.3.0
+	Version: 1.4.0
 	Author: show555
 	Description: 選択したフォルダ内の画像を指定した長辺のサイズでリサイズする
 	Includes: Underscore.js,
@@ -35,7 +35,7 @@ var settings = {
 		}
 	},
 	colorMode: 'RGB',        // カラーモードの初期値
-	maxpx: 1000,              // 長辺のサイズの初期値
+	maxpx: 1000,             // 長辺のサイズの初期値
 	_quality: {
 		jpgWeb: {
 			init: 90,            // 保存画質（Web用JPG）の初期値
@@ -57,11 +57,12 @@ var settings = {
 			eps:    { label: 'EPS', extension: 'eps' },
 			png:    { label: 'PNG', extension: 'png' }
 		},
-		dir: 'thumb',         // 保存先のディレクトリ名
+		dir: 'thumb',          // 保存先のディレクトリ名
+		overwrite: false,      // 同じ階層に保存する
 		suffix: ''             // リサイズした画像の接尾辞
 	},
 	fileTypes: [],
-	recursive: true,        // 指定フォルダを再帰的に処理するか
+	recursive: false,        // 指定フォルダを再帰的に処理するか
 	saveType: '',
 	quality: '',
 	folderObj: {}
@@ -112,15 +113,19 @@ var do_flag = true;
 
 // ---------------------------------- ダイアログ作成 ----------------------------------
 // ダイアログオブジェクト
-var uDlg = new Window( 'dialog', 'リサイズ', { x:0, y:0, width:400, height:400 } );
+var uDlg = new Window( 'dialog', 'リサイズ', { x:0, y:0, width:400, height:470 } );
 
 // ダイアログを画面に対して中央揃えに
 uDlg.center();
 
 // パネル 対象フォルダ
-uDlg.folderPnl           = uDlg.add( "panel",    { x:10,  y:10, width:380, height:60 }, "対象フォルダ" );
+uDlg.folderPnl           = uDlg.add( "panel",    { x:10,  y:10, width:380, height:80 }, "対象フォルダ" );
 uDlg.folderPnl.path      = uDlg.add( "edittext", { x:25,  y:30, width:270, height:25 }, settings.folderPath );
 uDlg.folderPnl.selectBtn = uDlg.add( "button",   { x:300, y:30, width:75,  height:25 }, "選択" );
+uDlg.folderPnl.recursive = uDlg.add( "checkbox", { x:25,  y:60, width:350, height:20 }, "サブフォルダも含める" );
+// “サブフォルダも含める”チェックボックスの初期値を設定
+uDlg.folderPnl.recursive.value = settings.recursive;
+
 // 対象フォルダ選択ボタンが押された時の処理
 uDlg.folderPnl.selectBtn.onClick = function() {
 	var oldPath = uDlg.folderPnl.path.text;
@@ -128,17 +133,17 @@ uDlg.folderPnl.selectBtn.onClick = function() {
 }
 
 // パネル 対象ファイルタイプ
-uDlg.fileTypePnl     = uDlg.add( "panel", { x:10, y:80, width:380, height:80 }, "対象ファイルタイプ" );
+uDlg.fileTypePnl     = uDlg.add( "panel", { x:10, y:100, width:380, height:80 }, "対象ファイルタイプ" );
 uDlg.fileTypePnl.ext = [];
-uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:25,  y:100, width:50, height:25 }, "JPG" ) );
-uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:85,  y:100, width:50, height:25 }, "GIF" ) );
-uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:145, y:100, width:50, height:25 }, "PNG" ) );
-uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:205, y:100, width:50, height:25 }, "EPS" ) );
-uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:265, y:100, width:50, height:25 }, "TIFF" ) );
-uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:325, y:100, width:50, height:25 }, "BMP" ) );
-uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:25, y:125, width:50, height:25 }, "PDF" ) );
-uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:85, y:125, width:50, height:25 }, "PSD" ) );
-uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:145, y:125, width:50, height:25 }, "AI" ) );
+uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:25,  y:120, width:50, height:25 }, "JPG" ) );
+uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:85,  y:120, width:50, height:25 }, "GIF" ) );
+uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:145, y:120, width:50, height:25 }, "PNG" ) );
+uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:205, y:120, width:50, height:25 }, "EPS" ) );
+uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:265, y:120, width:50, height:25 }, "TIFF" ) );
+uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:325, y:120, width:50, height:25 }, "BMP" ) );
+uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:25, y:145, width:50, height:25 }, "PDF" ) );
+uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:85, y:145, width:50, height:25 }, "PSD" ) );
+uDlg.fileTypePnl.ext.push( uDlg.add( "checkbox", { x:145, y:145, width:50, height:25 }, "AI" ) );
 _.each( uDlg.fileTypePnl.ext, function( item, key ) {
 	if ( _.contains( settings._fileTypes.init, item.text ) ) {
 		item.value = true;
@@ -147,27 +152,32 @@ _.each( uDlg.fileTypePnl.ext, function( item, key ) {
 
 // パネル 書き出し設定
 var saveTypeList = _.pluck( settings.save.type, 'label' );
-uDlg.resizePnl               = uDlg.add( "panel",        { x:10,  y:170, width:380, height:180 }, "書き出し設定" );
-uDlg.resizePnl.colorModeText = uDlg.add( "statictext",   { x:25,  y:195, width:70,  height:20  }, "モード:" );
-uDlg.resizePnl.saveTypeText  = uDlg.add( "statictext",   { x:25,  y:225, width:70,  height:20  }, "保存形式:" );
-uDlg.resizePnl.saveType      = uDlg.add( "dropdownlist", { x:105, y:223, width:110, height:22  }, saveTypeList );
-uDlg.resizePnl.maxpxText     = uDlg.add( "statictext",   { x:25,  y:255, width:70,  height:20  }, "長辺の長さ:" );
-uDlg.resizePnl.maxpx         = uDlg.add( "edittext",     { x:105, y:253, width:50,  height:22  }, settings.maxpx );
-uDlg.resizePnl.unitText      = uDlg.add( "statictext",   { x:160, y:255, width:20,  height:20  }, "px" );
-uDlg.resizePnl.qualityText   = uDlg.add( "statictext",   { x:25,  y:285, width:70,  height:20  }, "画質:" );
-uDlg.resizePnl.quality       = uDlg.add( "edittext",     { x:105, y:283, width:50,  height:22  }, settings._quality.jpgDtp.init );
-uDlg.resizePnl.qualityRange  = uDlg.add( "statictext",   { x:160, y:285, width:60,  height:20  }, "(0〜" + settings._quality.jpgDtp.max + ")" );
-uDlg.resizePnl.qualitySlider = uDlg.add( "slider",       { x:215, y:280, width:160, height:20  }, settings._quality.jpgDtp.init, settings._quality.jpgDtp.min, settings._quality.jpgDtp.max );
-uDlg.resizePnl.doNotEnlarge  = uDlg.add( "checkbox",     { x:25,  y:313, width:350, height:20  }, "画像の長辺が指定サイズ以下の場合拡大しない" );
-uDlg.resizePnl.colorModeText.justify = uDlg.resizePnl.saveTypeText.justify = uDlg.resizePnl.maxpxText.justify = uDlg.resizePnl.qualityText.justify = 'right';
+uDlg.resizePnl               = uDlg.add( "panel",        { x:10,  y:190, width:380, height:230 }, "書き出し設定" );
+uDlg.resizePnl.colorModeText = uDlg.add( "statictext",   { x:25,  y:215, width:70,  height:20  }, "モード:" );
+uDlg.resizePnl.saveTypeText  = uDlg.add( "statictext",   { x:25,  y:245, width:70,  height:20  }, "保存形式:" );
+uDlg.resizePnl.saveType      = uDlg.add( "dropdownlist", { x:105, y:243, width:110, height:22  }, saveTypeList );
+uDlg.resizePnl.maxpxText     = uDlg.add( "statictext",   { x:25,  y:275, width:70,  height:20  }, "長辺の長さ:" );
+uDlg.resizePnl.maxpx         = uDlg.add( "edittext",     { x:105, y:273, width:50,  height:22  }, settings.maxpx );
+uDlg.resizePnl.unitText      = uDlg.add( "statictext",   { x:160, y:275, width:20,  height:20  }, "px" );
+uDlg.resizePnl.qualityText   = uDlg.add( "statictext",   { x:25,  y:305, width:70,  height:20  }, "画質:" );
+uDlg.resizePnl.quality       = uDlg.add( "edittext",     { x:105, y:303, width:50,  height:22  }, settings._quality.jpgDtp.init );
+uDlg.resizePnl.qualityRange  = uDlg.add( "statictext",   { x:160, y:305, width:60,  height:20  }, "(0〜" + settings._quality.jpgDtp.max + ")" );
+uDlg.resizePnl.qualitySlider = uDlg.add( "slider",       { x:215, y:300, width:160, height:20  }, settings._quality.jpgDtp.init, settings._quality.jpgDtp.min, settings._quality.jpgDtp.max );
+uDlg.resizePnl.doNotEnlarge  = uDlg.add( "checkbox",     { x:25,  y:333, width:350, height:20  }, "画像の長辺が指定サイズ以下の場合拡大しない" );
+uDlg.resizePnl.overwrite     = uDlg.add( "checkbox",     { x:25,  y:355, width:350, height:20  }, "リサイズ後同じ階層に保存する（同形式の場合上書き）" );
+uDlg.resizePnl.saveDirText   = uDlg.add( "statictext",   { x:25,  y:385, width:70,  height:20  }, "保存先:" );
+uDlg.resizePnl.saveDir       = uDlg.add( "edittext",     { x:105, y:383, width:110, height:22  }, settings.save.dir );
+uDlg.resizePnl.colorModeText.justify = uDlg.resizePnl.saveTypeText.justify = uDlg.resizePnl.maxpxText.justify = uDlg.resizePnl.qualityText.justify = uDlg.resizePnl.saveDirText.justify = 'right';
 // カラーモード選択ラジオボタンの追加
-uDlg.resizePnl.colorMode      = uDlg.add( "group", { x:105, y:195, width:245, height:20 } );
+uDlg.resizePnl.colorMode      = uDlg.add( "group", { x:105, y:215, width:245, height:20 } );
 uDlg.resizePnl.colorMode.RGB  = uDlg.resizePnl.colorMode.add( "radiobutton",  { x:0,  y:0, width:50, height:20 }, "RGB" );
 uDlg.resizePnl.colorMode.CMYK = uDlg.resizePnl.colorMode.add( "radiobutton",  { x:55, y:0, width:70, height:20 }, "CMYK" );
 // カラーモードの初期値を設定
 uDlg.resizePnl.colorMode[settings.colorMode].value = true;
 // “画像の長辺が指定サイズ以下の場合拡大しない”チェックボックスの初期値を設定
 uDlg.resizePnl.doNotEnlarge.value = settings.doNotEnlarge;
+// “対象ファイルに上書き保存”チェックボックスの初期値を設定
+uDlg.resizePnl.overwrite.value = settings.save.overwrite;
 
 // 保存形式の初期値を設定
 uDlg.resizePnl.saveType.selection = _.indexOf( saveTypeList, settings.save.init );
@@ -184,9 +194,14 @@ uDlg.resizePnl.qualitySlider.onChanging = function() {
 uDlg.resizePnl.quality.onChange = function() {
 	uDlg.resizePnl.qualitySlider.value = parseInt( uDlg.resizePnl.quality.text );
 }
+// “対象ファイルに上書き保存”をチェックした時の処理
+uDlg.resizePnl.overwrite.onClick = function() {
+	uDlg.resizePnl.saveDirText.enabled = !uDlg.resizePnl.overwrite.value;
+	uDlg.resizePnl.saveDir.enabled     = !uDlg.resizePnl.overwrite.value;
+}
 
 // キャンセルボタン
-uDlg.cancelBtn = uDlg.add( "button", { x:95, y:360, width:100, height:25 }, "キャンセル", { name: "cancel" } );
+uDlg.cancelBtn = uDlg.add( "button", { x:95, y:430, width:100, height:25 }, "キャンセル", { name: "cancel" } );
 // キャンセルボタンが押されたらキャンセル処理（ESCキー含む）
 uDlg.cancelBtn.onClick = function() {
 	// 実行フラグにfalseを代入
@@ -196,17 +211,20 @@ uDlg.cancelBtn.onClick = function() {
 }
 
 // OKボタン
-uDlg.okBtn = uDlg.add( "button", { x:205, y:360, width:100, height:25 }, "リサイズ実行", { name: "ok" } );
+uDlg.okBtn = uDlg.add( "button", { x:205, y:430, width:100, height:25 }, "リサイズ実行", { name: "ok" } );
 // OKボタンが押されたら各設定項目に不備がないかチェック
 uDlg.okBtn.onClick = function() {
 	// 各種項目の値を格納
-	settings.folderPath   = uDlg.folderPnl.path.text;
-	settings.folderObj    = new Folder( settings.folderPath );
-	settings.colorMode    = uDlg.resizePnl.colorMode.RGB.value ? 'RGB' : 'CMYK';
-	settings.saveType     = getSaveTypeKey( uDlg.resizePnl.saveType.selection.text );
-	settings.maxpx        = parseInt( uDlg.resizePnl.maxpx.text );
-	settings.doNotEnlarge = uDlg.resizePnl.doNotEnlarge.value;
-	settings.fileTypes    = [];
+	settings.folderPath     = uDlg.folderPnl.path.text;
+	settings.folderObj      = new Folder( settings.folderPath );
+	settings.recursive      = uDlg.folderPnl.recursive.value;
+	settings.colorMode      = uDlg.resizePnl.colorMode.RGB.value ? 'RGB' : 'CMYK';
+	settings.saveType       = getSaveTypeKey( uDlg.resizePnl.saveType.selection.text );
+	settings.maxpx          = parseInt( uDlg.resizePnl.maxpx.text );
+	settings.doNotEnlarge   = uDlg.resizePnl.doNotEnlarge.value;
+	settings.save.dir       = uDlg.resizePnl.saveDir.text;
+	settings.save.overwrite = uDlg.resizePnl.overwrite.value;
+	settings.fileTypes      = [];
 	_.each( uDlg.fileTypePnl.ext, function( item ) {
 		if ( item.value ) {
 			settings.fileTypes.push( item.text );
@@ -267,7 +285,7 @@ uDlg.show();
 
 // ---------------------------------- メインリサイズ処理 ----------------------------------
 if ( do_flag ) {
-	// alert( 'フォルダ:' + uDlg.folderPnl.path.text + "\n" + '拡張子：' + settings.fileTypes.join( ', ' ) + "\n" + 'モード：' + settings.colorMode + "\n" + '保存形式：' + settings.saveType + "\n" + '長辺のサイズ：' + settings.maxpx + "\n" + '画質：' + settings.quality + "\n" + '画像が小さい場合拡大しない：' + settings.doNotEnlarge );
+	// alert( 'フォルダ:' + uDlg.folderPnl.path.text + "\n" + '拡張子：' + settings.fileTypes.join( ', ' ) + "\n" + 'モード：' + settings.colorMode + "\n" + '保存形式：' + settings.saveType + "\n" + '長辺のサイズ：' + settings.maxpx + "\n" + '画質：' + settings.quality + "\n" + '画像が小さい場合拡大しない：' + settings.doNotEnlarge + "\n" + '保存先：' + settings.save.dir + "\n" + '上書きする' + settings.save.overwrite );
 
 	// 複数の対象ファイルを取得するための正規表現オブジェクトを作成
 	var extensions = [];
@@ -325,12 +343,12 @@ if ( do_flag ) {
 			theDoc.resizeImage( w * ( settings.maxpx/h ), settings.maxpx, 72, ResampleMethod.BICUBICSMOOTHER );
 		}
 		// 保存先フォルダを作成
-		var saveDir = settings.save.dir ? new Folder( path + '/' + settings.save.dir ) : new Folder( path );
+		var saveDir = !settings.save.overwrite ? new Folder( path + '/' + settings.save.dir ) : new Folder( path );
 		if( !saveDir.exists ){
 			saveDir.create();
 		}
 		// 保存用の新規オブジェクト作成
-		var saveDirPath = settings.save.dir ? settings.save.dir + '/' : '';
+		var saveDirPath = !settings.save.overwrite ? settings.save.dir + '/' : '';
 		var newFile     = new File( path + '/' + saveDirPath + theDoc.name.replace( /\.\w+$/i, '' ) + settings.save.suffix + '.' + settings.save.type[settings.saveType].extension );
 		// 保存形式ごとの関数を呼び出し
 		saveFunctions[settings.saveType]( theDoc, newFile, settings );
