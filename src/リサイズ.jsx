@@ -55,7 +55,8 @@ var settings = {
 			jpgWeb: { label: 'JPG（WEB用）', extension: 'jpg' },
 			jpgDtp: { label: 'JPG', extension: 'jpg' },
 			eps:    { label: 'EPS', extension: 'eps' },
-			png:    { label: 'PNG', extension: 'png' }
+			png:    { label: 'PNG', extension: 'png' },
+			psd:    { label: 'PSD', extension: 'psd' }
 		},
 		dir: 'thumb',          // 保存先のディレクトリ名
 		overwrite: false,      // 同じ階層に保存する
@@ -105,6 +106,15 @@ var saveFunctions = {
 		var pngOpt        = new PNGSaveOptions();
 		pngOpt.interlaced = false;
 		theDoc.saveAs( newFile, pngOpt, true, Extension.LOWERCASE );
+	},
+	psd: function( theDoc, newFile, settings ) {
+		var psdOpt               = new PhotoshopSaveOptions();
+		psdOpt.alphaChannels     = true;  // αチャンネルを保存
+		psdOpt.annotations       = true;  // 注釈を保存します
+		psdOpt.embedColorProfile = false; // カラープロファイルを埋め込みません
+		psdOpt.layers            = true;  // レイヤーを保存します
+		psdOpt.spotColors        = false; // スポットカラーを保存しません
+		theDoc.saveAs( newFile, psdOpt, true, Extension.LOWERCASE );
 	}
 };
 
@@ -113,7 +123,7 @@ var do_flag = true;
 
 // ---------------------------------- ダイアログ作成 ----------------------------------
 // ダイアログオブジェクト
-var uDlg = new Window( 'dialog', 'リサイズ', { x:0, y:0, width:400, height:540 } );
+var uDlg = new Window( 'dialog', 'リサイズ', { x:0, y:0, width:400, height:610 } );
 
 // ダイアログを画面に対して中央揃えに
 uDlg.center();
