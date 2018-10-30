@@ -210,8 +210,8 @@ uDlg.resizePnl.overwrite.onClick = function() {
 	uDlg.resizePnl.saveDir.enabled     = !uDlg.resizePnl.overwrite.value;
 }
 
-// パネル 追加アクション
-uDlg.actionPnl            = uDlg.add( "panel",        { x:10, y:430, width:380, height:60 }, "追加アクション" );
+// パネル リサイズ前 追加アクション
+uDlg.actionPnl            = uDlg.add( "panel",        { x:10, y:430, width:380, height:60 }, "リサイズ前 追加アクション" );
 uDlg.actionPnl.actionList = uDlg.add( "dropdownlist", { x:25, y:452, width:350, height:22 }, {} );
 actionList = getActionSets();
 uDlg.actionPnl.actionList.add( 'item', 'なし' );
@@ -220,8 +220,18 @@ for (i = 0; i < actionList.length; i++) {
 }
 uDlg.actionPnl.actionList.selection = uDlg.actionPnl.actionList.items[0];
 
+// パネル リサイズ後 追加アクション
+uDlg.afterActionPnl            = uDlg.add( "panel",        { x:10, y:500, width:380, height:60 }, "リサイズ後 追加アクション" );
+uDlg.afterActionPnl.actionList = uDlg.add( "dropdownlist", { x:25, y:522, width:350, height:22 }, {} );
+actionList = getActionSets();
+uDlg.afterActionPnl.actionList.add( 'item', 'なし' );
+for (i = 0; i < actionList.length; i++) {
+	uDlg.afterActionPnl.actionList.add( 'item', actionList[i] );
+}
+uDlg.afterActionPnl.actionList.selection = uDlg.afterActionPnl.actionList.items[0];
+
 // キャンセルボタン
-uDlg.cancelBtn = uDlg.add( "button", { x:95, y:500, width:100, height:25 }, "キャンセル", { name: "cancel" } );
+uDlg.cancelBtn = uDlg.add( "button", { x:95, y:570, width:100, height:25 }, "キャンセル", { name: "cancel" } );
 // キャンセルボタンが押されたらキャンセル処理（ESCキー含む）
 uDlg.cancelBtn.onClick = function() {
 	// 実行フラグにfalseを代入
@@ -231,7 +241,7 @@ uDlg.cancelBtn.onClick = function() {
 }
 
 // OKボタン
-uDlg.okBtn = uDlg.add( "button", { x:205, y:500, width:100, height:25 }, "リサイズ実行", { name: "ok" } );
+uDlg.okBtn = uDlg.add( "button", { x:205, y:570, width:100, height:25 }, "リサイズ実行", { name: "ok" } );
 // OKボタンが押されたら各設定項目に不備がないかチェック
 uDlg.okBtn.onClick = function() {
 	// 各種項目の値を格納
@@ -354,7 +364,15 @@ if ( do_flag ) {
 		// theDoc.flatten();
 		// カラーモードをRGBに変更
 		theDoc.changeMode( ChangeMode[settings.colorMode] );
-		//リサイズする
+
+		// リサイズ前 追加アクション実行
+		var isDoAction = (uDlg.actionPnl.actionList.selection.toString() !== 'なし') ? true : false;
+		if ( isDoAction ) {
+			selectAction = uDlg.actionPnl.actionList.selection.toString().split("::->>");
+			app.doAction( selectAction[1], selectAction[0] );
+		}
+
+		// リサイズする
 		var w = theDoc.width.value;
 		var h = theDoc.height.value;
 		if ( w > h && judgeResizeable( w, h ) ) {
@@ -362,12 +380,14 @@ if ( do_flag ) {
 		} else if ( h >= w && judgeResizeable( w, h ) ) {
 			theDoc.resizeImage( w * ( settings.maxpx/h ), settings.maxpx, 72, ResampleMethod.BICUBICSMOOTHER );
 		}
-		// 追加アクション実行
-		var isDoAction = (uDlg.actionPnl.actionList.selection.toString() !== 'なし') ? true : false;
+
+		// リサイズ後 追加アクション実行
+		var isDoAction = (uDlg.afterActionPnl.actionList.selection.toString() !== 'なし') ? true : false;
 		if ( isDoAction ) {
-			selectAction = uDlg.actionPnl.actionList.selection.toString().split("::->>");
+			selectAction = uDlg.afterActionPnl.actionList.selection.toString().split("::->>");
 			app.doAction( selectAction[1], selectAction[0] );
 		}
+
 		// 保存先フォルダを作成
 		var saveDir = !settings.save.overwrite ? new Folder( path + '/' + settings.save.dir ) : new Folder( path );
 		if( !saveDir.exists ){
