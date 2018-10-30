@@ -38,7 +38,7 @@ var settings = {
 	maxpx: 1000,             // 長辺のサイズの初期値
 	_quality: {
 		jpgWeb: {
-			init: 90,            // 保存画質（Web用JPG）の初期値
+			init: 100,            // 保存画質（Web用JPG）の初期値
 			min:  0,
 			max:  100
 		},
